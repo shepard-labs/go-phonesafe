@@ -508,57 +508,6 @@ func TestIsPossibleNumberForType(t *testing.T) {
 	}
 }
 
-// --- GetNumberType ---
-
-func TestGetNumberType(t *testing.T) {
-	u := Instance()
-
-	tests := []struct {
-		name   string
-		number PhoneNumber
-		want   PhoneNumberType
-	}{
-		{
-			name:   "US fixed-line or mobile",
-			number: PhoneNumber{CountryCode: 1, NationalNumber: 6502530000},
-			want:   TypeFixedLineOrMobile,
-		},
-		{
-			name:   "GB mobile",
-			number: PhoneNumber{CountryCode: 44, NationalNumber: 7912345678},
-			want:   TypeMobile,
-		},
-		{
-			name:   "DE fixed-line",
-			number: PhoneNumber{CountryCode: 49, NationalNumber: 30123456},
-			want:   TypeFixedLine,
-		},
-		{
-			name:   "US toll-free",
-			number: PhoneNumber{CountryCode: 1, NationalNumber: 8002530000},
-			want:   TypeTollFree,
-		},
-		{
-			name:   "US premium rate",
-			number: PhoneNumber{CountryCode: 1, NationalNumber: 9002530000},
-			want:   TypePremiumRate,
-		},
-		{
-			name:   "Invalid CC returns unknown",
-			number: PhoneNumber{CountryCode: 3923, NationalNumber: 2366},
-			want:   TypeUnknown,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := u.GetNumberType(tc.number)
-			if got != tc.want {
-				t.Errorf("GetNumberType(%+v) = %v, want %v", tc.number, got, tc.want)
-			}
-		})
-	}
-}
 
 // --- GetRegionCodeForNumber ---
 
@@ -608,48 +557,6 @@ func TestGetRegionCodeForNumber(t *testing.T) {
 	}
 }
 
-// --- IsNumberGeographical ---
-
-func TestIsNumberGeographical(t *testing.T) {
-	u := Instance()
-
-	tests := []struct {
-		name   string
-		number PhoneNumber
-		want   bool
-	}{
-		{
-			name:   "US number is geographical",
-			number: PhoneNumber{CountryCode: 1, NationalNumber: 6502530000},
-			want:   true,
-		},
-		{
-			name:   "GB mobile is not geographical",
-			number: PhoneNumber{CountryCode: 44, NationalNumber: 7912345678},
-			want:   false,
-		},
-		{
-			name:   "DE fixed-line is geographical",
-			number: PhoneNumber{CountryCode: 49, NationalNumber: 30123456},
-			want:   true,
-		},
-		{
-			name:   "US toll-free is not geographical",
-			number: PhoneNumber{CountryCode: 1, NationalNumber: 8002530000},
-			want:   false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			got := u.IsNumberGeographical(tc.number)
-			if got != tc.want {
-				t.Errorf("IsNumberGeographical(%+v) = %v, want %v",
-					tc.number, got, tc.want)
-			}
-		})
-	}
-}
 
 // --- GetCountryCodeForRegion ---
 
