@@ -165,13 +165,20 @@ func (u *PhoneNumberUtil) getMetadataForRegionOrCallingCode(cc int32, region str
 func (u *PhoneNumberUtil) getRegionCodeForCountryCode(cc int32) string {
 	regions := metadata.CountryCodeToRegions[cc]
 	if len(regions) == 0 {
+		// Check if this is a non-geographical entity.
+		if _, ok := metadata.NonGeoMetadata[cc]; ok {
+			return regionCodeNonGeo
+		}
 		return "ZZ"
 	}
 	return regions[0]
 }
 
 func (u *PhoneNumberUtil) hasValidCountryCallingCode(cc int32) bool {
-	_, ok := metadata.CountryCodeToRegions[cc]
+	if _, ok := metadata.CountryCodeToRegions[cc]; ok {
+		return true
+	}
+	_, ok := metadata.NonGeoMetadata[cc]
 	return ok
 }
 
