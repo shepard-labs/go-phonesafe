@@ -262,6 +262,13 @@ func parseAlternateFormatsXML(path string) ([]parsedAltFormats, error) {
 
 func convertTerritory(xt xmlTerritory) parsedTerritory {
 	cc, _ := strconv.ParseInt(xt.CountryCode, 10, 32)
+	// Default NationalPrefixForParsing to NationalPrefix when not explicitly set,
+	// matching upstream behavior (see BuildMetadataFromXml.java).
+	npForParsing := stripPatternWS(xt.NationalPrefixForParsing)
+	if npForParsing == "" {
+		npForParsing = xt.NationalPrefix
+	}
+
 	t := parsedTerritory{
 		ID:                           xt.ID,
 		CountryCode:                  int32(cc),
@@ -269,7 +276,7 @@ func convertTerritory(xt xmlTerritory) parsedTerritory {
 		PreferredInternationalPrefix: xt.PreferredInternationalPrefix,
 		NationalPrefix:               xt.NationalPrefix,
 		PreferredExtnPrefix:          xt.PreferredExtnPrefix,
-		NationalPrefixForParsing:     stripPatternWS(xt.NationalPrefixForParsing),
+		NationalPrefixForParsing:     npForParsing,
 		NationalPrefixTransformRule:  xt.NationalPrefixTransformRule,
 		MainCountryForCode:           xt.MainCountryForCode == "true",
 		LeadingDigits:                stripPatternWS(xt.LeadingDigits),

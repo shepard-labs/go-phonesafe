@@ -272,7 +272,7 @@ func TestParseErrors(t *testing.T) {
 		{"invalid country code", "+999 123 456", "ZZ", ErrInvalidCountryCode},
 		{"too short after IDD", "011 1", "US", ErrTooShortAfterIDD},
 		{"too short NSN", "+44 2", "ZZ", ErrTooShortNSN},
-		{"too long NSN", "+1 123456789012345678", "ZZ", ErrTooLongNSN},
+		{"too long NSN", "+1 1234567890123456789", "ZZ", ErrTooLongNSN},
 		{"invalid region no plus", "650 253 0000", "ZZ", ErrInvalidCountryCode},
 	}
 	for _, tt := range tests {
