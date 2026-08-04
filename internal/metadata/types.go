@@ -15,17 +15,17 @@ type PhoneMetadata struct {
 	LeadingDigits                string
 	MobileNumberPortable         bool
 
-	GeneralDesc    PhoneNumberDesc
-	FixedLine      PhoneNumberDesc
-	Mobile         PhoneNumberDesc
-	TollFree       PhoneNumberDesc
-	PremiumRate    PhoneNumberDesc
-	SharedCost     PhoneNumberDesc
-	PersonalNumber PhoneNumberDesc
-	VOIP           PhoneNumberDesc
-	Pager          PhoneNumberDesc
-	UAN            PhoneNumberDesc
-	Voicemail      PhoneNumberDesc
+	GeneralDesc             PhoneNumberDesc
+	FixedLine               PhoneNumberDesc
+	Mobile                  PhoneNumberDesc
+	TollFree                PhoneNumberDesc
+	PremiumRate             PhoneNumberDesc
+	SharedCost              PhoneNumberDesc
+	PersonalNumber          PhoneNumberDesc
+	VOIP                    PhoneNumberDesc
+	Pager                   PhoneNumberDesc
+	UAN                     PhoneNumberDesc
+	Voicemail               PhoneNumberDesc
 	NoInternationalDialling PhoneNumberDesc
 
 	NumberFormats     []NumberFormat
@@ -42,11 +42,11 @@ type PhoneNumberDesc struct {
 
 // NumberFormat defines a formatting rule for phone numbers.
 type NumberFormat struct {
-	Pattern                      string
-	Format                       string
-	LeadingDigitsPatterns        []string
-	NationalPrefixFormattingRule string
-	NationalPrefixOptional       bool
+	Pattern                           string
+	Format                            string
+	LeadingDigitsPatterns             []string
+	NationalPrefixFormattingRule      string
+	NationalPrefixOptional            bool
 	DomesticCarrierCodeFormattingRule string
-	IntlFormat                   string
+	IntlFormat                        string
 }

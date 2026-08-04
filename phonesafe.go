@@ -49,9 +49,9 @@ type PhoneNumberFormat int
 
 const (
 	FormatE164          PhoneNumberFormat = iota // "+41446681800"
-	FormatInternational                         // "+41 44 668 1800"
-	FormatNational                              // "044 668 1800"
-	FormatRFC3966                               // "tel:+41-44-668-1800"
+	FormatInternational                          // "+41 44 668 1800"
+	FormatNational                               // "044 668 1800"
+	FormatRFC3966                                // "tel:+41-44-668-1800"
 )
 
 // PhoneNumberType classifies a phone number.
@@ -87,7 +87,7 @@ const (
 type ValidationResult int
 
 const (
-	IsPossible          ValidationResult = iota
+	IsPossible ValidationResult = iota
 	IsPossibleLocalOnly
 	InvalidCountryCode
 	TooShort
@@ -139,11 +139,11 @@ func (e *ParseError) Error() string {
 
 // NumberFormatRule defines a caller-supplied formatting pattern for FormatByPattern.
 type NumberFormatRule struct {
-	Pattern                      string
-	Format                       string
-	LeadingDigitsPatterns        []string
-	NationalPrefixFormattingRule string
-	NationalPrefixOptional       bool
+	Pattern                           string
+	Format                            string
+	LeadingDigitsPatterns             []string
+	NationalPrefixFormattingRule      string
+	NationalPrefixOptional            bool
 	DomesticCarrierCodeFormattingRule string
 }
 
