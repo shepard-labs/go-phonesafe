@@ -204,6 +204,50 @@ func GetNationalSignificantNumber(number PhoneNumber) string {
 	return nsn
 }
 
+// GetLengthOfGeographicalAreaCode returns the length of the geographical area
+// code (area code) in the national significant number. Returns 0 if the number
+// has no area code (e.g., mobile numbers in most countries, or non-geographical
+// numbers).
+func (u *PhoneNumberUtil) GetLengthOfGeographicalAreaCode(number PhoneNumber) int {
+	region := u.getRegionCodeForNumber(number)
+	meta := u.getMetadataForRegionOrCallingCode(number.CountryCode, region)
+	if meta == nil {
+		return 0
+	}
+
+	// Only geographical numbers have area codes.
+	if !u.IsNumberGeographical(number) {
+		return 0
+	}
+
+	return u.GetLengthOfNationalDestinationCode(number)
+}
+
+// GetLengthOfNationalDestinationCode returns the length of the national
+// destination code (NDC) in the national significant number. The NDC is
+// broader than area code — it includes mobile prefixes too.
+// Returns 0 if the NDC cannot be determined.
+func (u *PhoneNumberUtil) GetLengthOfNationalDestinationCode(number PhoneNumber) int {
+	// Make a copy without extension to format cleanly.
+	copiedNumber := number
+	if number.Extension != "" {
+		copiedNumber.Extension = ""
+	}
+
+	formatted := u.Format(copiedNumber, FormatInternational)
+	// The formatted string looks like "+CC NDC subscriber" or "+CC NDC NDC subscriber".
+	// Split by separators to find the groups.
+	groups := separatorPattern.Split(formatted, -1)
+	// groups[0] should be "+CC", groups[1] is the NDC (or first group after CC).
+	if len(groups) <= 2 {
+		return 0
+	}
+	// If the first group is the country code with +, NDC is groups[1].
+	// But for NANPA numbers the CC and area code may appear as "+1 650 253 0000"
+	// where groups = ["+1", "650", "253", "0000"]. NDC is groups[1].
+	return len(groups[1])
+}
+
 // --- Parse pipeline functions ---
 
 // extractPossibleNumber strips leading non-phone characters and trailing junk.

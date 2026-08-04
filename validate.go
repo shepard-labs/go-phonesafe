@@ -2,6 +2,7 @@ package phonesafe
 
 import (
 	"slices"
+	"sort"
 
 	"github.com/shepard-labs/go-phonesafe/internal/metadata"
 )
@@ -192,7 +193,6 @@ func (u *PhoneNumberUtil) isNumberMatchingDesc(nationalNumber string, desc metad
 	return u.matchesEntirely(pattern, nationalNumber)
 }
 
-
 // getRegionCodeForNumber returns the region code for a parsed phone number.
 // When a country code maps to multiple regions, disambiguates using leadingDigits
 // or pattern matching.
@@ -355,3 +355,87 @@ func (u *PhoneNumberUtil) GetCountryCodeForRegion(region string) int32 {
 	return u.getCountryCodeForValidRegion(region)
 }
 
+// GetRegionCodeForCountryCode returns the main region for a calling code.
+// For shared calling codes (e.g., +1), returns the main country (e.g., "US").
+// Returns empty string if the calling code is unknown.
+func (u *PhoneNumberUtil) GetRegionCodeForCountryCode(cc int) string {
+	regions := metadata.CountryCodeToRegions[int32(cc)]
+	if len(regions) == 0 {
+		return ""
+	}
+	return regions[0]
+}
+
+// GetSupportedRegions returns all supported CLDR region codes (excluding "001").
+// The returned slice is sorted alphabetically.
+func (u *PhoneNumberUtil) GetSupportedRegions() []string {
+	regions := make([]string, 0, len(metadata.RegionMetadata))
+	for r := range metadata.RegionMetadata {
+		if r != "001" {
+			regions = append(regions, r)
+		}
+	}
+	sort.Strings(regions)
+	return regions
+}
+
+// GetSupportedCallingCodes returns all supported country calling codes.
+// The returned slice is sorted numerically.
+func (u *PhoneNumberUtil) GetSupportedCallingCodes() []int {
+	seen := make(map[int32]struct{}, len(metadata.CountryCodeToRegions)+len(metadata.NonGeoMetadata))
+	for cc := range metadata.CountryCodeToRegions {
+		seen[cc] = struct{}{}
+	}
+	for cc := range metadata.NonGeoMetadata {
+		seen[cc] = struct{}{}
+	}
+	codes := make([]int, 0, len(seen))
+	for cc := range seen {
+		codes = append(codes, int(cc))
+	}
+	sort.Ints(codes)
+	return codes
+}
+
+// GetSupportedTypesForRegion returns the phone number types that have
+// valid patterns defined for the given region.
+func (u *PhoneNumberUtil) GetSupportedTypesForRegion(region string) []PhoneNumberType {
+	if !u.isValidRegionCode(region) {
+		return nil
+	}
+	meta := u.getMetadataForRegion(region)
+	if meta == nil {
+		return nil
+	}
+	var types []PhoneNumberType
+	for _, t := range []struct {
+		typ  PhoneNumberType
+		desc metadata.PhoneNumberDesc
+	}{
+		{TypeFixedLine, meta.FixedLine},
+		{TypeMobile, meta.Mobile},
+		{TypeTollFree, meta.TollFree},
+		{TypePremiumRate, meta.PremiumRate},
+		{TypeSharedCost, meta.SharedCost},
+		{TypePersonalNumber, meta.PersonalNumber},
+		{TypeVOIP, meta.VOIP},
+		{TypePager, meta.Pager},
+		{TypeUAN, meta.UAN},
+		{TypeVoicemail, meta.Voicemail},
+	} {
+		if t.desc.NationalNumberPattern != "" {
+			types = append(types, t.typ)
+		}
+	}
+	return types
+}
+
+// IsMobileNumberPortableRegion returns true if the region supports
+// mobile number portability.
+func (u *PhoneNumberUtil) IsMobileNumberPortableRegion(region string) bool {
+	meta := u.getMetadataForRegion(region)
+	if meta == nil {
+		return false
+	}
+	return meta.MobileNumberPortable
+}

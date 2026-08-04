@@ -21,6 +21,9 @@ var singleInternationalPrefixPattern = regexp.MustCompile(
 // separatorPattern matches phone number separators (used in RFC3966 formatting).
 var separatorPattern = regexp.MustCompile(`[-\x{2010}-\x{2015}\x{2212}\x{30FC}\x{FF0D}-\x{FF0F} \x{00A0}\x{00AD}\x{200B}\x{2060}\x{3000}()\x{FF08}\x{FF09}\x{FF3B}\x{FF3D}.\\/~\x{2053}\x{223C}]+`)
 
+// leadingSeparatorPattern matches leading punctuation/separators to strip in RFC3966 formatting.
+var leadingSeparatorPattern = regexp.MustCompile(`^[-\x{2010}-\x{2015}\x{2212}\x{30FC}\x{FF0D}-\x{FF0F} \x{00A0}\x{00AD}\x{200B}\x{2060}\x{3000}()\x{FF08}\x{FF09}\x{FF3B}\x{FF3D}.\\/~\x{2053}\x{223C}]+`)
+
 // --- Internal formatting helpers ---
 
 // prefixNumberWithCountryCallingCode prepends the country calling code
@@ -117,7 +120,7 @@ func (u *PhoneNumberUtil) formatNsnUsingPatternWithCarrier(nationalNumber string
 
 	if format == FormatRFC3966 {
 		// Strip leading punctuation then replace all separators with "-".
-		if loc := regexp.MustCompile(`^[-\x{2010}-\x{2015}\x{2212}\x{30FC}\x{FF0D}-\x{FF0F} \x{00A0}\x{00AD}\x{200B}\x{2060}\x{3000}()\x{FF08}\x{FF09}\x{FF3B}\x{FF3D}.\\/~\x{2053}\x{223C}]+`).FindStringIndex(formatted); loc != nil {
+		if loc := leadingSeparatorPattern.FindStringIndex(formatted); loc != nil {
 			formatted = formatted[loc[1]:]
 		}
 		formatted = separatorPattern.ReplaceAllString(formatted, "-")
@@ -618,4 +621,119 @@ func GetCountryMobileToken(cc int32) string {
 // mobileTokenMap maps country calling codes to their mobile tokens.
 var mobileTokenMap = map[int32]string{
 	54: "9", // Argentina
+}
+
+// GetExampleNumber returns a valid example number for the given region.
+// Returns false if no example is available.
+func (u *PhoneNumberUtil) GetExampleNumber(region string) (PhoneNumber, bool) {
+	return u.GetExampleNumberForType(region, TypeFixedLine)
+}
+
+// GetExampleNumberForType returns a valid example number of the given type
+// for the region. Falls back to other types if the requested type has no example.
+// Returns false if no example is available.
+func (u *PhoneNumberUtil) GetExampleNumberForType(region string, numType PhoneNumberType) (PhoneNumber, bool) {
+	var meta *metadata.PhoneMetadata
+	if region == regionCodeNonGeo {
+		return PhoneNumber{}, false
+	}
+	meta = u.getMetadataForRegion(region)
+	if meta == nil {
+		return PhoneNumber{}, false
+	}
+
+	desc := getDescForType(meta, numType)
+	if desc.ExampleNumber != "" {
+		num, err := u.Parse(desc.ExampleNumber, region)
+		if err == nil {
+			return num, true
+		}
+	}
+
+	// Fallback: try other types.
+	fallbacks := []PhoneNumberType{
+		TypeFixedLine, TypeMobile, TypeTollFree, TypePremiumRate,
+		TypeSharedCost, TypeVOIP, TypePersonalNumber, TypePager, TypeUAN, TypeVoicemail,
+	}
+	for _, ft := range fallbacks {
+		if ft == numType {
+			continue
+		}
+		d := getDescForType(meta, ft)
+		if d.ExampleNumber != "" {
+			num, err := u.Parse(d.ExampleNumber, region)
+			if err == nil {
+				return num, true
+			}
+		}
+	}
+	return PhoneNumber{}, false
+}
+
+// GetInvalidExampleNumber returns an example of an invalid number for the region.
+// Useful for testing validation logic. Returns false if unable to generate one.
+func (u *PhoneNumberUtil) GetInvalidExampleNumber(region string) (PhoneNumber, bool) {
+	// Start with the example number and modify it to be invalid.
+	num, ok := u.GetExampleNumber(region)
+	if !ok {
+		return PhoneNumber{}, false
+	}
+
+	nsn := GetNationalSignificantNumber(num)
+	// Try appending digits until we get an invalid number.
+	for i := 0; i < 10; i++ {
+		nsn += "1"
+		candidate, err := u.Parse("+"+strconv.FormatInt(int64(num.CountryCode), 10)+nsn, "ZZ")
+		if err != nil {
+			continue
+		}
+		if !u.IsValidNumber(candidate) {
+			return candidate, true
+		}
+	}
+	return PhoneNumber{}, false
+}
+
+// TruncateTooLongNumber attempts to shorten a too-long number to a valid length
+// by removing trailing digits. Returns the truncated number and true on success,
+// or the original number and false if truncation cannot produce a valid number.
+func (u *PhoneNumberUtil) TruncateTooLongNumber(number PhoneNumber) (PhoneNumber, bool) {
+	if u.IsValidNumber(number) {
+		return number, true
+	}
+
+	candidate := number
+	nsn := GetNationalSignificantNumber(number)
+	for len(nsn) > minLengthForNSN {
+		// Remove last digit.
+		nsn = nsn[:len(nsn)-1]
+		candidate.NationalNumber = 0
+		candidate.ItalianLeadingZero = false
+		candidate.NumberOfLeadingZeros = 0
+
+		// Reconstruct from the trimmed NSN.
+		startIdx := 0
+		if len(nsn) > 0 && nsn[0] == '0' {
+			candidate.ItalianLeadingZero = true
+			zeros := 0
+			for startIdx < len(nsn) && nsn[startIdx] == '0' {
+				zeros++
+				startIdx++
+			}
+			candidate.NumberOfLeadingZeros = int32(zeros)
+		}
+
+		if startIdx < len(nsn) {
+			nn, err := strconv.ParseUint(nsn[startIdx:], 10, 64)
+			if err != nil {
+				return number, false
+			}
+			candidate.NationalNumber = nn
+		}
+
+		if u.IsPossibleNumber(candidate) && u.IsValidNumber(candidate) {
+			return candidate, true
+		}
+	}
+	return number, false
 }
