@@ -508,7 +508,6 @@ func TestIsPossibleNumberForType(t *testing.T) {
 	}
 }
 
-
 // --- GetRegionCodeForNumber ---
 
 func TestGetRegionCodeForNumber(t *testing.T) {
@@ -557,7 +556,6 @@ func TestGetRegionCodeForNumber(t *testing.T) {
 	}
 }
 
-
 // --- GetCountryCodeForRegion ---
 
 func TestGetCountryCodeForRegion(t *testing.T) {
@@ -571,9 +569,9 @@ func TestGetCountryCodeForRegion(t *testing.T) {
 		{"GB", 44},
 		{"DE", 49},
 		{"JP", 81},
-		{"ZZ", 0},   // invalid
-		{"", 0},     // invalid
-		{"001", 0},  // non-geo is not a valid region code
+		{"ZZ", 0},  // invalid
+		{"", 0},    // invalid
+		{"001", 0}, // non-geo is not a valid region code
 	}
 
 	for _, tc := range tests {
@@ -584,25 +582,5 @@ func TestGetCountryCodeForRegion(t *testing.T) {
 					tc.region, got, tc.want)
 			}
 		})
-	}
-}
-
-// --- Benchmarks ---
-
-func BenchmarkIsPossibleNumber(b *testing.B) {
-	u := Instance()
-	number := PhoneNumber{CountryCode: 1, NationalNumber: 6502530000}
-	b.ResetTimer()
-	for b.Loop() {
-		u.IsPossibleNumber(number)
-	}
-}
-
-func BenchmarkIsValidNumber(b *testing.B) {
-	u := Instance()
-	number := PhoneNumber{CountryCode: 1, NationalNumber: 6502530000}
-	b.ResetTimer()
-	for b.Loop() {
-		u.IsValidNumber(number)
 	}
 }

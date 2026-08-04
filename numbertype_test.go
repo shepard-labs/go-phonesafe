@@ -252,14 +252,3 @@ func TestIsNumberGeographical(t *testing.T) {
 		})
 	}
 }
-
-// --- Benchmarks ---
-
-func BenchmarkGetNumberType(b *testing.B) {
-	u := Instance()
-	number := PhoneNumber{CountryCode: 1, NationalNumber: 6502530000}
-	b.ResetTimer()
-	for b.Loop() {
-		u.GetNumberType(number)
-	}
-}

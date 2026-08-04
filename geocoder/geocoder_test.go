@@ -250,11 +250,11 @@ func TestMayFallBackToEnglish(t *testing.T) {
 	}
 }
 
-func BenchmarkGetDescriptionForNumber(b *testing.B) {
+func BenchmarkGeocode(b *testing.B) {
 	g := Instance()
 	en := language.English
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		g.GetDescriptionForNumber(usNumber1, en)
 	}
 }

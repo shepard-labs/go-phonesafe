@@ -17,11 +17,11 @@ var (
 	usNumber2 = phonesafe.PhoneNumber{CountryCode: 1, NationalNumber: 2128120000} // New York, NY
 	usNumber3 = phonesafe.PhoneNumber{CountryCode: 1, NationalNumber: 6174240000} // Boston, MA
 
-	usInvalidNumber  = phonesafe.PhoneNumber{CountryCode: 1, NationalNumber: 123456789}
-	koInvalidNumber  = phonesafe.PhoneNumber{CountryCode: 82, NationalNumber: 1234}
-	invalidCCNumber  = phonesafe.PhoneNumber{CountryCode: 999, NationalNumber: 2423651234}
-	intlTollFree     = phonesafe.PhoneNumber{CountryCode: 800, NationalNumber: 12345678}
-	nanpaTollFree    = phonesafe.PhoneNumber{CountryCode: 1, NationalNumber: 8002431234}
+	usInvalidNumber = phonesafe.PhoneNumber{CountryCode: 1, NationalNumber: 123456789}
+	koInvalidNumber = phonesafe.PhoneNumber{CountryCode: 82, NationalNumber: 1234}
+	invalidCCNumber = phonesafe.PhoneNumber{CountryCode: 999, NationalNumber: 2423651234}
+	intlTollFree    = phonesafe.PhoneNumber{CountryCode: 800, NationalNumber: 12345678}
+	nanpaTollFree   = phonesafe.PhoneNumber{CountryCode: 1, NationalNumber: 8002431234}
 )
 
 func TestGetTimeZonesForNumber(t *testing.T) {
@@ -154,7 +154,7 @@ func TestInstanceSingleton(t *testing.T) {
 	}
 }
 
-func BenchmarkGetTimeZonesForNumber(b *testing.B) {
+func BenchmarkTimezone(b *testing.B) {
 	m := Instance()
 	for b.Loop() {
 		m.GetTimeZonesForNumber(usNumber1)
