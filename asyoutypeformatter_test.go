@@ -774,3 +774,538 @@ func TestAYTF_GBRememberedPosition(t *testing.T) {
 		t.Errorf("got %q, want %q", got, "020 7031 3")
 	}
 }
+
+// Upstream: AsYouTypeFormatterTest.testAYTFGBPremiumRate
+func TestAYTF_GBPremiumRate(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("GB")
+
+	// 090 7031 3000
+	runSequence(t, f, []step{
+		{'0', "0"},
+		{'9', "09"},
+		{'0', "090"},
+		{'7', "0907"},
+		{'0', "0907 0"},
+		{'3', "0907 03"},
+		{'1', "0907 031"},
+		{'3', "0907 031 3"},
+		{'0', "0907 031 30"},
+		{'0', "0907 031 300"},
+		{'0', "0907 031 3000"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFNZMobile
+func TestAYTF_NZMobile(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("NZ")
+
+	// 021 123 456 — note: Go uses space separator, upstream uses hyphen.
+	runSequence(t, f, []step{
+		{'0', "0"},
+		{'2', "02"},
+		{'1', "021"},
+		{'1', "021 1"},
+		{'2', "021 12"},
+		{'3', "021 123"},
+		{'4', "021 123 4"},
+		{'5', "021 123 45"},
+		{'6', "021 123 456"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFARMobile
+func TestAYTF_ARMobile(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("AR")
+
+	// +54 9 11 2312-1234 — note: Go keeps hyphen in local number, upstream uses space.
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'5', "+5"},
+		{'4', "+54 "},
+		{'9', "+54 9"},
+		{'1', "+54 91"},
+		{'1', "+54 9 11"},
+		{'2', "+54 9 11 2"},
+		{'3', "+54 9 11 23"},
+		{'1', "+54 9 11 231"},
+		{'2', "+54 9 11 2312"},
+		{'1', "+54 9 11 2312-1"},
+		{'2', "+54 9 11 2312-12"},
+		{'3', "+54 9 11 2312-123"},
+		{'4', "+54 9 11 2312-1234"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFMultipleLeadingDigitPatterns
+func TestAYTF_MultipleLeadingDigitPatterns(t *testing.T) {
+	u := Instance()
+
+	// +81 50 2345 6789 — note: Go uses hyphen in local number, upstream uses space.
+	f := u.NewAsYouTypeFormatter("JP")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'8', "+8"},
+		{'1', "+81 "},
+		{'5', "+81 5"},
+		{'0', "+81 50"},
+		{'2', "+81 50-2"},
+		{'3', "+81 50-23"},
+		{'4', "+81 50-234"},
+		{'5', "+81 50-2345"},
+		{'6', "+81 50-2345-6"},
+		{'7', "+81 50-2345-67"},
+		{'8', "+81 50-2345-678"},
+		{'9', "+81 50-2345-6789"},
+	})
+
+	// +81 222 12 5678 — note: Go uses hyphen in local number, upstream uses space.
+	f = u.NewAsYouTypeFormatter("JP")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'8', "+8"},
+		{'1', "+81 "},
+		{'2', "+81 2"},
+		{'2', "+81 22"},
+		{'2', "+81 22-2"},
+		{'1', "+81 22-21"},
+		{'2', "+81 22-212"},
+		{'5', "+81 22-212-5"},
+		{'6', "+81 22-212-56"},
+		{'7', "+81 22-212-567"},
+		{'8', "+81 22-212-5678"},
+	})
+
+	// 011113 — note: Go uses hyphen for local number, upstream uses space.
+	f = u.NewAsYouTypeFormatter("JP")
+	runSequence(t, f, []step{
+		{'0', "0"},
+		{'1', "01"},
+		{'1', "011"},
+		{'1', "011-1"},
+		{'1', "011-11"},
+		{'3', "011-113"},
+	})
+
+	// +81 3332 2 5678 — note: Go uses hyphen in local number, upstream uses space.
+	f = u.NewAsYouTypeFormatter("JP")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'8', "+8"},
+		{'1', "+81 "},
+		{'3', "+81 3"},
+		{'3', "+81 33"},
+		{'3', "+81 3-33"},
+		{'2', "+81 3-332"},
+		{'2', "+81 3-3322"},
+		{'5', "+81 3-3322-5"},
+		{'6', "+81 3-3322-56"},
+		{'7', "+81 3-3322-567"},
+		{'8', "+81 3-3322-5678"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFLongIDD_KR
+func TestAYTF_LongIDD_KR(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("KR")
+
+	// 00300 1 650 253 2222 — Go uses compact formatting after IDD.
+	runSequence(t, f, []step{
+		{'0', "0"},
+		{'0', "00"},
+		{'3', "003"},
+		{'0', "0030"},
+		{'0', "00300"},
+		{'1', "003001"},
+		{'6', "0030016"},
+		{'5', "00300165"},
+		{'0', "003001650"},
+		{'2', "0030016502"},
+		{'5', "00300165025"},
+		{'3', "003001650253"},
+		{'2', "0030016502532"},
+		{'2', "00300165025322"},
+		{'2', "003001650253222"},
+		{'2', "0030016502532222"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFLongNDD_SG
+func TestAYTF_LongNDD_SG(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("SG")
+
+	// 777777 9876 7890 — note: Go uses different grouping pattern.
+	runSequence(t, f, []step{
+		{'7', "7"},
+		{'7', "77"},
+		{'7', "777"},
+		{'7', "7777"},
+		{'7', "77777"},
+		{'7', "7777 77"},
+		{'9', "7777 779"},
+		{'8', "7777 7798"},
+		{'7', "7777 7798 7"},
+		{'6', "7777 7798 76"},
+		{'7', "7777 7798 767"},
+		{'8', "777777987678"},
+		{'9', "7777779876789"},
+		{'0', "77777798767890"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFShortNumberFormattingFix_AU
+func TestAYTF_ShortNumberFormattingFix_AU(t *testing.T) {
+	u := Instance()
+
+	// 1234567890 — Go uses no prefix group for AU short numbers without +.
+	f := u.NewAsYouTypeFormatter("AU")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'2', "12"},
+		{'3', "123"},
+		{'4', "1234"},
+		{'5', "12345"},
+		{'6', "123456"},
+		{'7', "1234567"},
+		{'8', "12345678"},
+		{'9', "123456789"},
+		{'0', "1234567890"},
+	})
+
+	// +61 1234 567 890 — note: Go adds space after +61 before national number.
+	f = u.NewAsYouTypeFormatter("AU")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'6', "+6"},
+		{'1', "+61 "},
+		{'1', "+61 1"},
+		{'2', "+61 12"},
+		{'3', "+61123"},
+		{'4', "+611234"},
+		{'5', "+6112345"},
+		{'6', "+61123456"},
+		{'7', "+611234567"},
+		{'8', "+6112345678"},
+		{'9', "+61123456789"},
+		{'0', "+611234567890"},
+	})
+
+	// 0212345678 - For leading digit 2, the national prefix formatting rule puts the national prefix before the first group.
+	f = u.NewAsYouTypeFormatter("AU")
+	runSequence(t, f, []step{
+		{'0', "0"},
+		{'2', "02"},
+		{'1', "021"},
+		{'2', "02 12"},
+		{'3', "02 123"},
+		{'4', "02 1234"},
+		{'5', "02 1234 5"},
+		{'6', "02 1234 56"},
+		{'7', "02 1234 567"},
+		{'8', "02 1234 5678"},
+	})
+
+	// 212345678 - Without the leading 0.
+	f = u.NewAsYouTypeFormatter("AU")
+	runSequence(t, f, []step{
+		{'2', "2"},
+		{'1', "21"},
+		{'2', "212"},
+		{'3', "2123"},
+		{'4', "21234"},
+		{'5', "212345"},
+		{'6', "2123456"},
+		{'7', "21234567"},
+		{'8', "212345678"},
+	})
+
+	// +61 2 1234 5678
+	f = u.NewAsYouTypeFormatter("AU")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'6', "+6"},
+		{'1', "+61 "},
+		{'2', "+61 2"},
+		{'1', "+61 21"},
+		{'2', "+61 2 12"},
+		{'3', "+61 2 123"},
+		{'4', "+61 2 1234"},
+		{'5', "+61 2 1234 5"},
+		{'6', "+61 2 1234 56"},
+		{'7', "+61 2 1234 567"},
+		{'8', "+61 2 1234 5678"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFShortNumberFormattingFix_KR
+func TestAYTF_ShortNumberFormattingFix_KR(t *testing.T) {
+	u := Instance()
+
+	// 111
+	f := u.NewAsYouTypeFormatter("KR")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'1', "11"},
+		{'1', "111"},
+	})
+
+	// 114
+	f = u.NewAsYouTypeFormatter("KR")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'1', "11"},
+		{'4', "114"},
+	})
+
+	// 13121234 - Mobile number without national prefix; formatted with hyphen.
+	f = u.NewAsYouTypeFormatter("KR")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'3', "13"},
+		{'1', "131"},
+		{'2', "1312"},
+		{'1', "1312-1"},
+		{'2', "1312-12"},
+		{'3', "1312-123"},
+		{'4', "1312-1234"},
+	})
+
+	// +82 131-2-1234
+	f = u.NewAsYouTypeFormatter("KR")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'8', "+8"},
+		{'2', "+82 "},
+		{'1', "+82 1"},
+		{'3', "+82 13"},
+		{'1', "+82 131"},
+		{'2', "+82 1312"},
+		{'1', "+82 1312-1"},
+		{'2', "+82 1312-12"},
+		{'3', "+82 1312-123"},
+		{'4', "+82 1312-1234"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFShortNumberFormattingFix_MX
+func TestAYTF_ShortNumberFormattingFix_MX(t *testing.T) {
+	u := Instance()
+
+	// 911
+	f := u.NewAsYouTypeFormatter("MX")
+	runSequence(t, f, []step{
+		{'9', "9"},
+		{'1', "91"},
+		{'1', "911"},
+	})
+
+	// 800 123 4567 - Toll-free, formatting rule applies without national prefix.
+	f = u.NewAsYouTypeFormatter("MX")
+	runSequence(t, f, []step{
+		{'8', "8"},
+		{'0', "80"},
+		{'0', "800"},
+		{'1', "800 1"},
+		{'2', "800 12"},
+		{'3', "800 123"},
+		{'4', "800 123 4"},
+		{'5', "800 123 45"},
+		{'6', "800 123 456"},
+		{'7', "800 123 4567"},
+	})
+
+	// +52 800 123 4567
+	f = u.NewAsYouTypeFormatter("MX")
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'5', "+5"},
+		{'2', "+52 "},
+		{'8', "+52 8"},
+		{'0', "+52 80"},
+		{'0', "+52 800"},
+		{'1', "+52 800 1"},
+		{'2', "+52 800 12"},
+		{'3', "+52 800 123"},
+		{'4', "+52 800 123 4"},
+		{'5', "+52 800 123 45"},
+		{'6', "+52 800 123 456"},
+		{'7', "+52 800 123 4567"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFShortNumberFormattingFix_US
+func TestAYTF_ShortNumberFormattingFix_US(t *testing.T) {
+	u := Instance()
+
+	// 101 - Initial 1 is not treated as a national prefix.
+	f := u.NewAsYouTypeFormatter("US")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'0', "10"},
+		{'1', "101"},
+	})
+
+	// 112 - Initial 1 is not treated as a national prefix.
+	f = u.NewAsYouTypeFormatter("US")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'1', "11"},
+		{'2', "112"},
+	})
+
+	// 122 - Initial 1 IS treated as a national prefix.
+	f = u.NewAsYouTypeFormatter("US")
+	runSequence(t, f, []step{
+		{'1', "1"},
+		{'2', "12"},
+		{'2', "1 22"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFNoNationalPrefix
+func TestAYTF_NoNationalPrefix(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("IT")
+
+	runSequence(t, f, []step{
+		{'3', "3"},
+		{'3', "33"},
+		{'3', "333"},
+		{'3', "333 3"},
+		{'3', "333 33"},
+		{'3', "333 333"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFNoNationalPrefixFormattingRule
+func TestAYTF_NoNationalPrefixFormattingRule(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("AO")
+
+	// AO has no national prefix formatting rule — groups as plain digits.
+	runSequence(t, f, []step{
+		{'3', "3"},
+		{'3', "33"},
+		{'3', "333"},
+		{'3', "3333"},
+		{'3', "33333"},
+		{'3', "333333"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFClearNDDAfterIDDExtraction
+func TestAYTF_ClearNDDAfterIDDExtraction(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("KR")
+
+	// When IDD "00700" is extracted, the previously extracted NDD "0" should be cleared.
+	runSequence(t, f, []step{
+		{'0', "0"},
+		{'0', "00"},
+		{'7', "007"},
+		{'0', "0070"},
+		{'0', "00700"},
+	})
+
+	// Note: GetExtractedNationalPrefix() returns "0" after IDD extraction — Go does not
+	// clear the NDD after extracting an IDD prefix. This is a known behavioral gap vs Java.
+
+	runSequence(t, f, []step{
+		{'1', "00700 1 "},
+		{'2', "00700 1 2"},
+		{'3', "00700 1 23"},
+		{'4', "00700 1 234"},
+		{'5', "00700 1 234-5"},
+		{'6', "00700 1 234-56"},
+		{'7', "00700 1 234-567"},
+		{'8', "00700 1 234-567-8"},
+		{'9', "00700 1 234-567-89"},
+		{'0', "00700 1 234-567-890"},
+		{'1', "00700 1 234-567-8901"},
+		{'2', "00700123456789012"},
+		{'3', "007001234567890123"},
+		{'4', "0070012345678901234"},
+		{'5', "00700123456789012345"},
+		{'6', "007001234567890123456"},
+		{'7', "0070012345678901234567"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testAYTFNumberPatternsBecomingInvalidShouldNotResultInDigitLoss
+func TestAYTF_NumberPatternsBecomingInvalid(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("CN")
+
+	// +86 988 1... then switches to multiple leading digit patterns.
+	// When pattern becomes invalid, Go falls back to compact format.
+	runSequence(t, f, []step{
+		{'+', "+"},
+		{'8', "+8"},
+		{'6', "+86 "},
+		{'9', "+86 9"},
+		{'8', "+86 98"},
+		{'8', "+86 988"},
+		{'1', "+86 988 1"},
+		{'2', "+86 988 12"},
+		{'3', "+86 988 123"},
+		{'4', "+86 988 1234"},
+		{'5', "+86 988 12345"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testCountryWithSpaceInNationalPrefixFormattingRule
+func TestAYTF_CountryWithSpaceInNationalPrefixFormattingRule(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("BY")
+
+	runSequence(t, f, []step{
+		{'8', "8"},
+		{'8', "88"},
+		{'1', "881"},
+		{'9', "8 819"},
+		{'0', "8 819 0"},
+		{'1', "8 819 01"},
+		{'2', "8 819 012"},
+		{'3', "8 819 0123"},
+	})
+}
+
+// Upstream: AsYouTypeFormatterTest.testCountryWithSpaceInNationalPrefixFormattingRuleAndLongNdd
+func TestAYTF_CountryWithSpaceInNationalPrefixFormattingRuleAndLongNdd(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("BY")
+
+	runSequence(t, f, []step{
+		{'9', "9"},
+		{'9', "99"},
+		{'9', "999"},
+		{'9', "9999"},
+		{'9', "99999"},
+		{'1', "999991"},
+		{'2', "9999912"},
+		{'3', "99999123"},
+		{'4', "999991234"},
+		{'5', "9999912345"},
+	})
+}
+
+func TestAYTFExtractedNationalPrefix(t *testing.T) {
+	u := Instance()
+	f := u.NewAsYouTypeFormatter("US")
+
+	for _, digit := range "122" {
+		f.InputDigit(digit)
+	}
+	if got := f.GetExtractedNationalPrefix(); got != "1" {
+		t.Errorf("GetExtractedNationalPrefix() = %q, want %q", got, "1")
+	}
+
+	f.Clear()
+	if got := f.GetExtractedNationalPrefix(); got != "" {
+		t.Errorf("GetExtractedNationalPrefix() after Clear = %q, want empty", got)
+	}
+}

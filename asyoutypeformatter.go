@@ -73,10 +73,10 @@ type AsYouTypeFormatter struct {
 	extractedNationalPrefix string
 	possibleFormats         []*metadata.NumberFormat
 
-	ableToFormat                    bool
-	inputHasFormatting              bool
-	isCompleteNumber                bool
-	isExpectingCountryCallingCode   bool
+	ableToFormat                      bool
+	inputHasFormatting                bool
+	isCompleteNumber                  bool
+	isExpectingCountryCallingCode     bool
 	shouldAddSpaceAfterNationalPrefix bool
 
 	lastMatchPosition  int
@@ -161,6 +161,12 @@ func (f *AsYouTypeFormatter) GetRememberedPosition() int {
 		currentOutputIndex++
 	}
 	return currentOutputIndex
+}
+
+// GetExtractedNationalPrefix returns the national prefix that was extracted
+// from the number being formatted, if any.
+func (f *AsYouTypeFormatter) GetExtractedNationalPrefix() string {
+	return f.extractedNationalPrefix
 }
 
 func (f *AsYouTypeFormatter) inputDigitWithOptionToRememberPosition(nextChar rune, rememberPosition bool) string {
