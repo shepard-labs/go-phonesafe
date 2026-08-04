@@ -1,0 +1,46 @@
+# As-You-Type Formatter golden test data for US
+# Format: input_digit|expected_formatted
+# Source: upstream AsYouTypeFormatterTest.java testAsYouTypeFormatterUS
+# Note: trailing spaces after IDD/CC recognition are correct upstream behavior.
+# Use \s at end of line to represent trailing space.
+# Sequence 1: US domestic (650) 253-2222
+6|6
+5|65
+0|650
+2|650-2
+5|650-25
+3|650-253
+2|650-2532
+2|(650) 253-22
+2|(650) 253-222
+2|(650) 253-2222
+# Sequence 2: US with national prefix 1 (650) 253-2222
+CLEAR
+1|1
+6|16
+5|1 65
+0|1 (650
+2|1 (650) 2
+5|1 (650) 25
+3|1 (650) 253
+2|1 (650) 253-2
+2|1 (650) 253-22
+2|1 (650) 253-222
+2|1 (650) 253-2222
+# Sequence 3: US IDD to UK London 011 44 20 7031 3000
+CLEAR
+0|0
+1|01
+1|011\s
+4|011 4
+4|011 44\s
+2|011 44 2
+0|011 44 20
+7|011 44 20 7
+0|011 44 20 70
+3|011 44 20 703
+1|011 44 20 7031
+3|011 44 20 7031 3
+0|011 44 20 7031 30
+0|011 44 20 7031 300
+0|011 44 20 7031 3000

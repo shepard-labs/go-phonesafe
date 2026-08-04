@@ -1,6 +1,10 @@
 package phonesafe
 
-import "testing"
+import (
+	"os"
+	"strings"
+	"testing"
+)
 
 // Test number constants matching upstream.
 var (
@@ -382,5 +386,94 @@ func TestGetCountryMobileToken(t *testing.T) {
 	}
 	if got := GetCountryMobileToken(1); got != "" {
 		t.Errorf("US mobile token = %q, want empty", got)
+	}
+}
+
+// --- Golden File Tests ---
+// These tests verify formatting output against golden files in testdata/format_golden/.
+// See TESTING_SPEC.md §3.3 for the golden file test pattern.
+
+func TestFormatGoldenFiles(t *testing.T) {
+	u := Instance()
+
+	t.Run("us_national", func(t *testing.T) {
+		testFormatGoldenFile(t, u, "testdata/format_golden/us_national.txt", FormatNational)
+	})
+	t.Run("international", func(t *testing.T) {
+		testFormatGoldenFile(t, u, "testdata/format_golden/international.txt", FormatInternational)
+	})
+}
+
+func testFormatGoldenFile(t *testing.T, u *PhoneNumberUtil, path string, format PhoneNumberFormat) {
+	t.Helper()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("failed to read golden file %s: %v", path, err)
+	}
+
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		parts := strings.SplitN(line, "|", 3)
+		if len(parts) != 3 {
+			t.Fatalf("%s:%d: invalid format, expected input|region|expected", path, i+1)
+		}
+		input, region, expected := parts[0], parts[1], parts[2]
+
+		num, parseErr := u.Parse(input, region)
+		if parseErr != nil {
+			t.Errorf("%s:%d: Parse(%q, %q) error: %v", path, i+1, input, region, parseErr)
+			continue
+		}
+		got := u.Format(num, format)
+		if got != expected {
+			t.Errorf("%s:%d: Format(%q, %v) = %q, want %q", path, i+1, input, format, got, expected)
+		}
+	}
+}
+
+func TestFormatGoldenAsYouType(t *testing.T) {
+	u := Instance()
+
+	data, err := os.ReadFile("testdata/format_golden/as_you_type_us.txt")
+	if err != nil {
+		t.Fatalf("failed to read golden file: %v", err)
+	}
+
+	var f *AsYouTypeFormatter
+	lines := strings.Split(string(data), "\n")
+	for i, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if line == "CLEAR" {
+			f = u.NewAsYouTypeFormatter("US")
+			continue
+		}
+		if f == nil {
+			f = u.NewAsYouTypeFormatter("US")
+		}
+
+		parts := strings.SplitN(line, "|", 2)
+		if len(parts) != 2 {
+			t.Fatalf("as_you_type_us.txt:%d: invalid format, expected digit|expected", i+1)
+		}
+		digitStr, expected := parts[0], parts[1]
+		// \s at end of expected = trailing space (can't be represented literally in text files).
+		expected = strings.ReplaceAll(expected, `\s`, " ")
+		if len(digitStr) != 1 {
+			t.Fatalf("as_you_type_us.txt:%d: digit must be single char, got %q", i+1, digitStr)
+		}
+		digit := rune(digitStr[0])
+		got := f.InputDigit(digit)
+		if got != expected {
+			t.Errorf("as_you_type_us.txt:%d: InputDigit(%q) = %q, want %q",
+				i+1, string(digit), got, expected)
+		}
 	}
 }
