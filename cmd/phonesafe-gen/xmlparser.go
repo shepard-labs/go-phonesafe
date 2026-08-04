@@ -52,13 +52,13 @@ type parsedDesc struct {
 
 // parsedFormat holds a number formatting rule.
 type parsedFormat struct {
-	Pattern                          string
-	Format                           string
-	LeadingDigitsPatterns            []string
-	NationalPrefixFormattingRule     string
-	NationalPrefixOptional           bool
+	Pattern                           string
+	Format                            string
+	LeadingDigitsPatterns             []string
+	NationalPrefixFormattingRule      string
+	NationalPrefixOptional            bool
 	DomesticCarrierCodeFormattingRule string
-	IntlFormat                       string
+	IntlFormat                        string
 }
 
 // parsedShortTerritory holds short number metadata for a region.
@@ -95,8 +95,8 @@ type tzEntry struct {
 // --- XML types for decoding ---
 
 type xmlPhoneNumberMetadata struct {
-	XMLName     xml.Name         `xml:"phoneNumberMetadata"`
-	Territories xmlTerritories   `xml:"territories"`
+	XMLName     xml.Name       `xml:"phoneNumberMetadata"`
+	Territories xmlTerritories `xml:"territories"`
 }
 
 type xmlTerritories struct {
@@ -104,17 +104,19 @@ type xmlTerritories struct {
 }
 
 type xmlTerritory struct {
-	ID                           string `xml:"id,attr"`
-	CountryCode                  string `xml:"countryCode,attr"`
-	InternationalPrefix          string `xml:"internationalPrefix,attr"`
-	PreferredInternationalPrefix string `xml:"preferredInternationalPrefix,attr"`
-	NationalPrefix               string `xml:"nationalPrefix,attr"`
-	PreferredExtnPrefix          string `xml:"preferredExtnPrefix,attr"`
-	NationalPrefixForParsing     string `xml:"nationalPrefixForParsing,attr"`
-	NationalPrefixTransformRule  string `xml:"nationalPrefixTransformRule,attr"`
-	MainCountryForCode           string `xml:"mainCountryForCode,attr"`
-	LeadingDigits                string `xml:"leadingDigits,attr"`
-	MobileNumberPortableRegion   string `xml:"mobileNumberPortableRegion,attr"`
+	ID                                   string `xml:"id,attr"`
+	CountryCode                          string `xml:"countryCode,attr"`
+	InternationalPrefix                  string `xml:"internationalPrefix,attr"`
+	PreferredInternationalPrefix         string `xml:"preferredInternationalPrefix,attr"`
+	NationalPrefix                       string `xml:"nationalPrefix,attr"`
+	PreferredExtnPrefix                  string `xml:"preferredExtnPrefix,attr"`
+	NationalPrefixForParsing             string `xml:"nationalPrefixForParsing,attr"`
+	NationalPrefixTransformRule          string `xml:"nationalPrefixTransformRule,attr"`
+	NationalPrefixFormattingRule         string `xml:"nationalPrefixFormattingRule,attr"`
+	NationalPrefixOptionalWhenFormatting string `xml:"nationalPrefixOptionalWhenFormatting,attr"`
+	MainCountryForCode                   string `xml:"mainCountryForCode,attr"`
+	LeadingDigits                        string `xml:"leadingDigits,attr"`
+	MobileNumberPortableRegion           string `xml:"mobileNumberPortableRegion,attr"`
 
 	AvailableFormats *xmlAvailableFormats `xml:"availableFormats"`
 
@@ -145,13 +147,13 @@ type xmlAvailableFormats struct {
 }
 
 type xmlNumberFormat struct {
-	Pattern                          string   `xml:"pattern,attr"`
-	NationalPrefixFormattingRule     string   `xml:"nationalPrefixFormattingRule,attr"`
-	NationalPrefixOptionalWhenFormatting string `xml:"nationalPrefixOptionalWhenFormatting,attr"`
-	CarrierCodeFormattingRule        string   `xml:"carrierCodeFormattingRule,attr"`
-	LeadingDigits                    []string `xml:"leadingDigits"`
-	Format                           string   `xml:"format"`
-	IntlFormat                       string   `xml:"intlFormat"`
+	Pattern                              string   `xml:"pattern,attr"`
+	NationalPrefixFormattingRule         string   `xml:"nationalPrefixFormattingRule,attr"`
+	NationalPrefixOptionalWhenFormatting string   `xml:"nationalPrefixOptionalWhenFormatting,attr"`
+	CarrierCodeFormattingRule            string   `xml:"carrierCodeFormattingRule,attr"`
+	LeadingDigits                        []string `xml:"leadingDigits"`
+	Format                               string   `xml:"format"`
+	IntlFormat                           string   `xml:"intlFormat"`
 }
 
 type xmlDesc struct {
@@ -323,6 +325,14 @@ func convertTerritory(xt xmlTerritory) parsedTerritory {
 	if xt.AvailableFormats != nil {
 		for _, xf := range xt.AvailableFormats.NumberFormat {
 			pf := convertFormat(xf)
+			// Inherit nationalPrefixFormattingRule from territory if not set on format.
+			if pf.NationalPrefixFormattingRule == "" && xt.NationalPrefixFormattingRule != "" {
+				pf.NationalPrefixFormattingRule = xt.NationalPrefixFormattingRule
+			}
+			// Inherit nationalPrefixOptionalWhenFormatting from territory if not set on format.
+			if !pf.NationalPrefixOptional && xt.NationalPrefixOptionalWhenFormatting == "true" {
+				pf.NationalPrefixOptional = true
+			}
 			t.NumberFormats = append(t.NumberFormats, pf)
 		}
 		// Build IntlNumberFormats: skip formats with IntlFormat="NA",
@@ -332,6 +342,14 @@ func convertTerritory(xt xmlTerritory) parsedTerritory {
 				continue
 			}
 			pf := convertFormat(xf)
+			// Inherit nationalPrefixFormattingRule from territory if not set on format.
+			if pf.NationalPrefixFormattingRule == "" && xt.NationalPrefixFormattingRule != "" {
+				pf.NationalPrefixFormattingRule = xt.NationalPrefixFormattingRule
+			}
+			// Inherit nationalPrefixOptionalWhenFormatting from territory if not set on format.
+			if !pf.NationalPrefixOptional && xt.NationalPrefixOptionalWhenFormatting == "true" {
+				pf.NationalPrefixOptional = true
+			}
 			if xf.IntlFormat != "" {
 				pf.Format = strings.TrimSpace(xf.IntlFormat)
 			}
@@ -358,12 +376,12 @@ func convertDesc(xd *xmlDesc) parsedDesc {
 
 func convertFormat(xf xmlNumberFormat) parsedFormat {
 	pf := parsedFormat{
-		Pattern:                          xf.Pattern,
-		Format:                           strings.TrimSpace(xf.Format),
-		NationalPrefixFormattingRule:     xf.NationalPrefixFormattingRule,
-		NationalPrefixOptional:           xf.NationalPrefixOptionalWhenFormatting == "true",
+		Pattern:                           xf.Pattern,
+		Format:                            strings.TrimSpace(xf.Format),
+		NationalPrefixFormattingRule:      xf.NationalPrefixFormattingRule,
+		NationalPrefixOptional:            xf.NationalPrefixOptionalWhenFormatting == "true",
 		DomesticCarrierCodeFormattingRule: xf.CarrierCodeFormattingRule,
-		IntlFormat:                       strings.TrimSpace(xf.IntlFormat),
+		IntlFormat:                        strings.TrimSpace(xf.IntlFormat),
 	}
 	for _, ld := range xf.LeadingDigits {
 		pf.LeadingDigitsPatterns = append(pf.LeadingDigitsPatterns, stripPatternWS(ld))
@@ -479,8 +497,14 @@ func parseGeocodingFile(path string) ([]geoEntry, error) {
 
 	var entries []geoEntry
 	scanner := bufio.NewScanner(f)
+	firstLine := true
 	for scanner.Scan() {
 		line := scanner.Text()
+		// Strip UTF-8 BOM if present on the first line.
+		if firstLine {
+			line = strings.TrimPrefix(line, "\xEF\xBB\xBF")
+			firstLine = false
+		}
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
@@ -513,8 +537,14 @@ func parseTimezoneFile(path string) ([]tzEntry, error) {
 	// Some timezone lines are very long.
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 
+	firstLine := true
 	for scanner.Scan() {
 		line := scanner.Text()
+		// Strip UTF-8 BOM if present on the first line.
+		if firstLine {
+			line = strings.TrimPrefix(line, "\xEF\xBB\xBF")
+			firstLine = false
+		}
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
